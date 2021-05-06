@@ -1,0 +1,48 @@
+﻿<h3 class="ml-3 mt-4 text-dark"><i class="far fa-file-alt mr-2"></i>Newest Measurements</h3>
+
+<div class="container card-container mt-5">
+    <div class="col mb-3">
+        <div tabindex="0" class="e-card water-fonts-click">
+            <h3 style="font-size: 32px; font-weight: 400">@NewestHumidity %</h3>
+            <div>
+                <span style="font-size: initial">Humidity</span>
+                <span class="card-water-image-click">
+                    <i class="fas fa-tint" style="font-size: 40px"></i>
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <div class="col mt-3">
+        <div tabindex="0" class="e-card Calorie-fonts-click">
+            <h3 style="font-size: 32px; font-weight: 400">@NewestTemperature °C</h3>
+            <div>
+                <span style="font-size: initial">Temperature</span>
+                <span class="card-Calorie-image-click">
+                    <i class="fas fa-temperature-high" style="font-size: 40px"></i>
+                </span>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+
+    [Inject]
+    protected IMeasurementService _measurementService { get; set; }
+
+    public Measurement measurement;
+
+    public string NewestTemperature = "";
+    public string NewestHumidity = "";
+
+    protected async override void OnInitialized()
+    {
+        measurement = await _measurementService.GetNewestMeasurementAsync();
+
+        NewestTemperature = measurement.Temperature.ToString();
+        NewestHumidity = measurement.Humidity.ToString();
+
+        StateHasChanged();
+    }
+}

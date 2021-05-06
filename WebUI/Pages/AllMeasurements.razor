@@ -1,0 +1,318 @@
+﻿@page "/all-measurements"
+@using Syncfusion.Blazor
+@using Syncfusion.Blazor.Charts
+@using Syncfusion.Blazor.Layouts
+@using Syncfusion.Blazor.Notifications
+@inject NavigationManager NavigationManager
+@inject HttpClient httpClient
+
+@attribute [Authorize]
+
+<style>
+    #chart_Series_0_Point_2_Symbol {
+        -webkit-animation: opac 1s ease-out infinite;
+        animation: opac 1s ease-out infinite;
+    }
+
+    #chart_Series_2_Point_0_Symbol {
+        -webkit-animation: opac 1s ease-out infinite;
+        animation: opac 1s ease-in-out infinite;
+    }
+
+    @@keyframes opac {
+        0% {
+            stroke-opacity: 1;
+            stroke-width: 0px;
+        }
+
+        100% {
+            stroke-opacity: 0;
+            stroke-width: 10px;
+        }
+    }
+
+    .ulstyle {
+        margin: 0px;
+        padding-left: 20px;
+        display: inline-block;
+    }
+
+    .list {
+        float: left;
+        line-height: 20px;
+        margin: 10px;
+        min-width: 200px;
+    }
+
+    @@font-face {
+        font-family: 'Toast_icons';
+        src: url(data:application/x-font-ttf;charset=utf-8;base64,AAEAAAAKAIAAAwAgT1MvMj0gSRkAAAEoAAAAVmNtYXDnM+eRAAABsAAAAEpnbHlmzVnmlwAAAhgAAAZAaGVhZBEYIl8AAADQAAAANmhoZWEHlgN3AAAArAAAACRobXR4LvgAAAAAAYAAAAAwbG9jYQnUCGIAAAH8AAAAGm1heHABHQBcAAABCAAAACBuYW1lfUUTYwAACFgAAAKpcG9zdAxfTDgAAAsEAAAAggABAAADUv9qAFoEAAAAAAAD6AABAAAAAAAAAAAAAAAAAAAADAABAAAAAQAACcU5MF8PPPUACwPoAAAAANcI7skAAAAA1wjuyQAAAAAD6APoAAAACAACAAAAAAAAAAEAAAAMAFAABwAAAAAAAgAAAAoACgAAAP8AAAAAAAAAAQPqAZAABQAAAnoCvAAAAIwCegK8AAAB4AAxAQIAAAIABQMAAAAAAAAAAAAAAAAAAAAAAAAAAAAAUGZFZABA5wDnCgNS/2oAWgPoAJYAAAABAAAAAAAABAAAAAPoAAAD6AAAA+gAAAPoAAAD6AAAA+gAAAPoAAAD6AAAA+gAAAPoAAAD6AAAAAAAAgAAAAMAAAAUAAMAAQAAABQABAA2AAAABAAEAAEAAOcK//8AAOcA//8AAAABAAQAAAABAAIAAwAEAAUABgAHAAgACQAKAAsAAAAAAAAAQgB8AMIA4gEcAZQCBgJwAo4DAAMgAAAAAwAAAAADlAOUAAsAFwAjAAABFwcXNxc3JzcnBycFDgEHLgEnPgE3HgEFHgEXPgE3LgEnDgEBTXh4L3h4L3h4L3h4AbwDt4qKtwMDt4qKt/0eBeuxsesFBeuxsesCbHh4L3h4L3h4L3h4p4q3AwO3ioq3AwO3irHrBQXrsbHrBQXrAAAAAwAAAAADlAOUAAUAEQAdAAABJwcXAScXDgEHLgEnPgE3HgEFHgEXPgE3LgEnDgEBr2UylwEbMqADt4qKtwMDt4qKt/0eBeuxsesFBeuxsesBrGQylgEcMqKKtwMDt4qKtwMDt4qx6wUF67Gx6wUF6wAAAAAFAAAAAAOUA5cABQARAB0AIQAlAAABFzcnNSMFDgEHLgEnPgE3HgEFHgEXPgE3LgEnDgElFzcnBRc3JwHKxiCnPwFOA6V8fKUDA6V8fKX9aATToJ/UBATUn5/UAh7ANsD9fja/NQGedzNj29F8pAMDpHx8pQMDpXyf1AQE1J+g0wQE0/GhQKGhQKFAAAQAAAAAA74DfgADAAcACgANAAAlMzUjNTM1IwEhCQEhAQHLUlJSUgFj/YwBOv42A5T+NuZUUqf+igIc/ZADFgAEAAAAAAOUA5QAAwAHABMAHwAAATM1IzUzNSMFDgEHLgEnPgE3HgEFHgEXPgE3LgEnDgEBylRUVFQBbgO3ioq3AwO3ioq3/R4F67Gx6wUF67Gx6wEk+lNT0Iq3AwO3ioq3AwO3irHrBQXrsbHrBQXrAAAAAAcAAAAAA+gDMQALABUAJQAuADcAQQBLAAABFhcVITUmJz4BMxYFFhcVITU+ATcWJQYHFSE1LgEjIgYHLgEjIgEWFAYiJjQ2MgUWFAYiJjQ2MiUGFBYXPgE0JiIFBhQWFz4BNCYiA1xEBP6sAxUeRiRX/qxEBP45BIlXV/7xZQsD6AvKUypvMzNvKlMCKxozTTMzTP6CGTNMNDRMAQItWUREWlqI/jstWkREWVmIAWMbFjc3IBgKDwQcGxY3NxY3BAQjJUt7e0tKFxgYFwEMGU01NU0zGhlNNTVNMxYthloCAlqGWy4thloCAlqGWwAAAAQAAAAAA5wCxwAIABQANABFAAABFBYyNjQmIgYXDgEHLgEnPgE3HgEfAQcOAQ8BNz4BNS4BJw4BBxQWHwEnLgEvATc+ATc2FiUOAQ8BFx4BNz4BPwEnJiciAb8fLR4eLR+wAkU0NEUBAUU0NEX8BgEemG0FBB8kAlZBQFcBKyUCCkeVTAYBH76RVMP+3bDPBwcKZclcu/AGCwrM2AoBxxYfHy0eHhc0RQEBRTQ1RQEBRSgEARpWGAECFUIoQVcCAldBLEYUAQEIQkAGASJsBwFCoRbFFAoJW0sBCo8LCgztAQAAAAIAAAAAA4ADbAA4AEEAAAEEJCcmDgEWFx4BHwEVFAYHDgEnJg4BFhcWNjc2Fx4BBx4BFzc+ASc2JicmJzUzPgE3PgEnJicjIiUUFjI2NCYiBgNM/tz+pwwMGxEDDAaMfAcSETKEQw8WBg8Og80hNSg4JwICEw0FDhECAjFJEBICPYhKDQgGChQCB/5dMUgxMUgxAuB/ZRcIAxgbCQdHEQGTGi8TOVgKAw8dFwMNuDUFHTGDCA0QAQECFQ8Mnz8LCasJKiUHGg0SATMkMDBJMDAAAAAAAgAAAAAC/QMkAAMADQAAAQchJxMeATMhMjY3EyEC2x3+bB0kBCQZAQQZJARH/ewDBuDg/fcZICAZAicAAwAAAAACzwPoACwAQwBPAAABERQfARYfAzMVHgE7ATI2NRE0JisBNTEWOwEyNjQmJyMiJi8BLgErAQ4BAxUzNTQ2NzMeARcVMzUuAScjIgcjESM1HgEXPgE3LgEnDgEBVQEBAwQCCAjXARENOg0REQ2zDROVExoaE2UQGAQfAxAKYg0RPR8RDZcNEQEeASIalxANAR8CTTo6TQEBTTo6TQJ8/nYEBQIGBAIFArYNERENARENEUoNGicZARMPfQoNARH98Hl5DREBARENeXkaIgEIAe3FOk0CAk06Ok0BAU0AAAAAAgAAAAAC5gMyAAkAEQAAJRQWMyEyNjURITcjFSE1IycjASApHgEaHin+WFBuAeR+JLD8HigoHgGfeT09HgAAAAAAEgDeAAEAAAAAAAAAAQAAAAEAAAAAAAEAEgABAAEAAAAAAAIABwATAAEAAAAAAAMAEgAaAAEAAAAAAAQAEgAsAAEAAAAAAAUACwA+AAEAAAAAAAYAEgBJAAEAAAAAAAoALABbAAEAAAAAAAsAEgCHAAMAAQQJAAAAAgCZAAMAAQQJAAEAJACbAAMAAQQJAAIADgC/AAMAAQQJAAMAJADNAAMAAQQJAAQAJADxAAMAAQQJAAUAFgEVAAMAAQQJAAYAJAErAAMAAQQJAAoAWAFPAAMAAQQJAAsAJAGnIEZpbmFsIFRvYXN0IE1ldHJvcFJlZ3VsYXJGaW5hbCBUb2FzdCBNZXRyb3BGaW5hbCBUb2FzdCBNZXRyb3BWZXJzaW9uIDEuMEZpbmFsIFRvYXN0IE1ldHJvcEZvbnQgZ2VuZXJhdGVkIHVzaW5nIFN5bmNmdXNpb24gTWV0cm8gU3R1ZGlvd3d3LnN5bmNmdXNpb24uY29tACAARgBpAG4AYQBsACAAVABvAGEAcwB0ACAATQBlAHQAcgBvAHAAUgBlAGcAdQBsAGEAcgBGAGkAbgBhAGwAIABUAG8AYQBzAHQAIABNAGUAdAByAG8AcABGAGkAbgBhAGwAIABUAG8AYQBzAHQAIABNAGUAdAByAG8AcABWAGUAcgBzAGkAbwBuACAAMQAuADAARgBpAG4AYQBsACAAVABvAGEAcwB0ACAATQBlAHQAcgBvAHAARgBvAG4AdAAgAGcAZQBuAGUAcgBhAHQAZQBkACAAdQBzAGkAbgBnACAAUwB5AG4AYwBmAHUAcwBpAG8AbgAgAE0AZQB0AHIAbwAgAFMAdAB1AGQAaQBvAHcAdwB3AC4AcwB5AG4AYwBmAHUAcwBpAG8AbgAuAGMAbwBtAAAAAAIAAAAAAAAACgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADAECAQMBBAEFAQYBBwEIAQkBCgELAQwBDQAFRXJyb3IHU3VjY2VzcwVBbGFybQdXYXJuaW5nBEluZm8HTWVldGluZwVCbGluawdTdHJldGNoA1NpcANTaXQFVHJhc2gAAAAA) format('truetype');
+        font-weight: normal;
+        font-style: normal;
+    }
+
+    #toast_types button {
+        margin: 5px;
+        min-width: 160px;
+        max-width: 160px;
+    }
+
+    .toast-icons {
+        font-family: 'Toast_icons' !important;
+        speak: none;
+        font-size: 55px;
+        font-style: normal;
+        font-weight: normal;
+        font-variant: normal;
+        text-transform: none;
+        line-height: 1;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+    }
+
+    #toast_type .e-toast-icon.e-icons {
+        height: auto;
+        font-size: 30px;
+    }
+
+    .toast-icons.e-success::before {
+        content: "\e701";
+    }
+
+    .toast-icons.e-error::before {
+        content: "\e700";
+    }
+
+    .toast-icons.e-info::before {
+        content: "\e704";
+    }
+
+    .toast-icons.e-warning::before {
+        content: "\e703";
+    }
+
+    #toast_types {
+        text-align: center;
+    }
+</style>
+
+<h1><i class="far fa-chart-bar mr-2"></i>All Measurements</h1>
+<br />
+
+<div class="toast-default-section">
+    <SfToast @ref="myToast" ID="toast_type">
+        <ToastPosition X="Right" Y="Bottom"></ToastPosition>
+    </SfToast>
+
+    <div class="container card-container mt-5">
+        <div class="row">
+            <div class="col" @onclick="GetByNewestTime">
+                <div tabindex="0" class="e-card water-fonts-click">
+                    <h3 style="font-size: 32px; font-weight: 400">Newest Time</h3>
+                    <div>
+                        @*<span style="font-size: initial">Get by</span>*@
+                        <span class="card-water-image-click">
+                            @*<i class="fas fa-tint" style="font-size: 40px"></i>*@
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col" @onclick="GetByNewestDay">
+                <div tabindex="0" class="e-card Calorie-fonts-click">
+                    <h3 style="font-size: 32px; font-weight: 400">Newest Day</h3>
+                    <div>
+                        @*<span style="font-size: initial">Get by</span>*@
+                        <span class="card-Calorie-image-click">
+                            @*<i class="fas fa-temperature-high" style="font-size: 40px"></i>*@
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col" @onclick="GetByNewestWeek">
+                <div tabindex="0" class="e-card Calorie-fonts-click">
+                    <h3 style="font-size: 32px; font-weight: 400">Newest Week</h3>
+                    <div>
+                        @*<span style="font-size: initial">Get by</span>*@
+                        <span class="card-Calorie-image-click">
+                            @*<i class="fas fa-temperature-high" style="font-size: 40px"></i>*@
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <br />
+    <div id="ControlRegion">
+        <SfDashboardLayout @ref="dashboardObject" Columns="3" AllowResizing="true">
+            <DashboardLayoutPanels>
+                <DashboardLayoutPanel Id="one" Column="0" SizeX=2 SizeY=1>
+                    <ContentTemplate>
+                        <h3 class="ml-3 mt-1 mb-1 text-warning"><i class="fas fa-temperature-high mr-2"></i>Temperature i °C</h3>
+                        <div class="control-section">
+                            <SfChart Background="#FAFAFA">
+                                <ChartArea><ChartAreaBorder Width="0"></ChartAreaBorder></ChartArea>
+                                <ChartPrimaryXAxis ValueType="Syncfusion.Blazor.Charts.ValueType.Category" Interval="1" LabelIntersectAction="LabelIntersectAction.Rotate90">
+                                    <ChartAxisMajorGridLines Width="0"></ChartAxisMajorGridLines>
+                                </ChartPrimaryXAxis>
+                                <ChartPrimaryYAxis LabelFormat="{value}°C">
+                                    <ChartAxisLineStyle Width="0"></ChartAxisLineStyle>
+                                    <ChartAxisMajorTickLines Width="0"></ChartAxisMajorTickLines>
+                                    <ChartStriplines>
+                                        <ChartStripline Start="AvgTemp" SizeType="SizeType.Pixel" DashArray="3,3" Size="2" Color="#D93237" Text="@AvgTempText" HorizontalAlignment="Anchor.End" VerticalAlignment="Anchor.End">
+                                            <ChartStriplineTextStyle Color="#D93237" Size="14px" FontWeight="600" FontFamily="Helvetica"></ChartStriplineTextStyle>
+                                        </ChartStripline>
+                                    </ChartStriplines>
+                                </ChartPrimaryYAxis>
+                                <ChartTooltipSettings Enable="true"></ChartTooltipSettings>
+                                <ChartSeriesCollection>
+                                    <ChartSeries DataSource="@Measurements" Name="Temperature" XName="UpdatedMeasurementTime" Width="2" Fill="#F38D36"
+                                                 Opacity="1" YName="Temperature" Type="ChartSeriesType.Spline">
+                                        <ChartMarker Visible="true" Width="10" Height="10" Fill="#FCE38A">
+                                        </ChartMarker>
+                                    </ChartSeries>
+                                </ChartSeriesCollection>
+                            </SfChart>
+                            @*<h3 class="ml-3 mt-4 text-black-50">Antal Temperature measurements: @AntalTemp</h3>*@
+                        </div>
+                    </ContentTemplate>
+                </DashboardLayoutPanel>
+
+                <DashboardLayoutPanel Id="two" Column="0" SizeX=2 SizeY=1>
+                    <ContentTemplate>
+                        <h3 class="ml-3 mt-1 mb-1 text-primary"><i class="fas fa-tint mr-2"></i>Humidity i %</h3>
+                        <div class="control-section">
+                            <SfChart Background="#FAFAFA">
+                                <ChartArea><ChartAreaBorder Width="0"></ChartAreaBorder></ChartArea>
+                                <ChartPrimaryXAxis ValueType="Syncfusion.Blazor.Charts.ValueType.Category" Interval="1" LabelIntersectAction="LabelIntersectAction.Rotate90">
+                                    <ChartAxisMajorGridLines Width="0"></ChartAxisMajorGridLines>
+                                </ChartPrimaryXAxis>
+                                <ChartPrimaryYAxis LabelFormat="{value}%">
+                                    <ChartAxisLineStyle Width="0"></ChartAxisLineStyle>
+                                    <ChartAxisMajorTickLines Width="0"></ChartAxisMajorTickLines>
+                                    <ChartStriplines>
+                                        <ChartStripline Start="AvgHum" SizeType="SizeType.Pixel" DashArray="3,3" Size="2" Color="#D93237" Text="@AvgHumText" HorizontalAlignment="Anchor.End" VerticalAlignment="Anchor.End">
+                                            <ChartStriplineTextStyle Color="#D93237" Size="14px" FontWeight="600" FontFamily="Helvetica"></ChartStriplineTextStyle>
+                                        </ChartStripline>
+                                    </ChartStriplines>
+                                </ChartPrimaryYAxis>
+                                <ChartTooltipSettings Enable="true"></ChartTooltipSettings>
+                                <ChartSeriesCollection>
+                                    <ChartSeries DataSource="@Measurements" Name="Humidity" XName="UpdatedMeasurementTime" Width="2" Fill="#004c9e"
+                                                 Opacity="1" YName="Humidity" Type="ChartSeriesType.Spline">
+                                        <ChartMarker Visible="true" Width="10" Height="10" Fill="#007bff">
+                                        </ChartMarker>
+                                    </ChartSeries>
+                                </ChartSeriesCollection>
+                            </SfChart>
+                            @*<h3 class="ml-3 mt-4 text-black-50">Antal Humidity measurements: @AntalHum</h3>*@
+                        </div>
+                    </ContentTemplate>
+                </DashboardLayoutPanel>
+
+                <DashboardLayoutPanel Id="three" Column="2" SizeX=1 SizeY=1>
+                    <ContentTemplate>
+                        <Cards></Cards>
+                    </ContentTemplate>
+                </DashboardLayoutPanel>
+            </DashboardLayoutPanels>
+        </SfDashboardLayout>
+
+    </div>
+</div>
+
+
+<br />
+
+@code{
+
+    [Inject]
+    protected IMeasurementService _measurementsService { get; set; }
+
+    public List<Measurement> Measurements;
+
+    SfDashboardLayout dashboardObject;
+    SfToast myToast;
+
+    private List<ToastModel> Toast = new List<ToastModel>
+    {
+        new ToastModel{ Title = "Success!", Content="New measurements was loaded!", CssClass="e-toast-success", Icon="e-success toast-icons" },
+        new ToastModel{ Title = "Error!", Content="Couldn't load new measurements!", CssClass="e-toast-danger", Icon="e-error toast-icons" }
+    };
+
+    public float AvgTemp = 0.0F;
+    public string AvgTempText = "";
+
+    public float AvgHum = 0.0F;
+    public string AvgHumText = "";
+
+    public int AntalHum = 0;
+    public int AntalTemp = 0;
+
+    protected async override void OnInitialized()
+    {
+        Measurements = await _measurementsService.GetAllMeasurementsAsync(MeasurementFilterBy.ByNewestTime);
+
+        AvgTemp = Measurements.Average(x => x.Temperature);
+        AvgTempText = $"Average Temperature: {AvgTemp.ToString("0.00")} °C";
+
+        AvgHum = Measurements.Average(x => x.Humidity);
+        AvgHumText = $"Average Humidity: {AvgHum.ToString("0.00")} %";
+
+        AntalHum = Measurements.Select(x => x.Humidity).Count();
+        AntalTemp = Measurements.Select(x => x.Temperature).Count();
+
+        StateHasChanged();
+    }
+
+    public async void GetByNewestTime()
+    {
+        try
+        {
+            Measurements = await _measurementsService.GetAllMeasurementsAsync(MeasurementFilterBy.ByNewestTime);
+
+            await this.myToast.Show(Toast[0]);
+        }
+        catch(Exception e)
+        {
+            await this.myToast.Show(Toast[1]);
+        }
+
+
+        StateHasChanged();
+    }
+
+    public async void GetByNewestDay()
+    {
+        try
+        {
+            Measurements = await _measurementsService.GetAllMeasurementsAsync(MeasurementFilterBy.ByNewestDay);
+
+            await this.myToast.Show(Toast[0]);
+        }
+        catch
+        {
+            await this.myToast.Show(Toast[1]);
+        }
+
+        StateHasChanged();
+    }
+
+    public async void GetByNewestWeek()
+    {
+        try
+        {
+            Measurements = await _measurementsService.GetAllMeasurementsAsync(MeasurementFilterBy.ByNewestWeek);
+
+            await this.myToast.Show(Toast[0]);
+        }
+        catch
+        {
+            await this.myToast.Show(Toast[1]);
+        }
+
+        StateHasChanged();
+    }
+}
